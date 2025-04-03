@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { createBunWebSocket } from "hono/bun";
 import type { ServerWebSocket } from "bun";
-import { udpClient } from "~/utils/udpClient";
+import { udpClient } from "./utils/udpClient";
 
 const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket>();
 

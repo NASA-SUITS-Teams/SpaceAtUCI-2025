@@ -20,7 +20,7 @@ class UDPClient {
     
         this.client.on("message", (message, remote) => {
             console.log(`UDP message received from: ${remote.address}:${remote.port} - ${message}`);
-            this.parseMessage(message);
+            // this.parseMessage(message);
         });
     }
 
