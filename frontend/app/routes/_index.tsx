@@ -1,3 +1,4 @@
+// primary interface for LMCC
 import type { MetaFunction } from "@remix-run/node";
 import { useState } from "react";
 import { StatusBar } from "~/components/StatusBar";

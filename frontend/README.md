@@ -1,41 +1,22 @@
-# Welcome to Remix!
+# Mission Control Interface (LMCC) Frontend for NASA SUITS 2025
 
-- 📖 [Remix docs](https://remix.run/docs)
+Control interface for monitoring the EV Crew.
 
-## Development
+## System overview
 
-Run the dev server:
+There are three repositories that accompany this interface:
 
-```shellscript
-npm run dev
-```
+1. **Frontend**: Remix.js application (https://github.com/space-at-uci/frontend)
+2. **Backend Server**: Express.js application (https://github.com/space-at-uci/backend)
+3. **TSS Data/Telemetry Stream Server**: JSON stream server (https://github.com/SUITS-Techteam/TSS-2025)
 
-## Deployment
+We use a UDP Client to poll data in near real-time from the TSS server.
 
-First, build your app for production:
+## Setup
 
-```sh
-npm run build
-```
+First, clone all repositories. Then run the following commands in the root directory:
 
-Then run the app in production mode:
-
-```sh
-npm start
-```
-
-Now you'll need to pick a host to deploy it to.
-
-### DIY
-
-If you're familiar with deploying Node applications, the built-in Remix app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-- `build/server`
-- `build/client`
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.
-# nasa-frontend
+- Backend server: `npm install && npm run dev`
+- TSS server: `./server.exe`
+- Frontend: `npm install && npm run dev`
+  The server will run on http://localhost:8000 and the frontend will run on http://localhost:3000.

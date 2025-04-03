@@ -1,8 +1,5 @@
-import sun from "/public/icons/sun.svg";
-import wind from "/public/icons/wind.svg";
-import rain from "/public/icons/rain.svg";
-import humid from "/public/icons/humid.svg";
-import visible from "/public/icons/visible.svg";
+import { sunIcon, windIcon, rainIcon, humidIcon, visibleIcon } from "../icons";
+
 export function StatusBar({
   environmentalReadings,
 }: {
@@ -22,23 +19,23 @@ export function StatusBar({
       </div>
       <div className="flex items-center gap-6 text-sm">
         <span className="flex items-center gap-1">
-          <img src={sun} alt="Temperature" className="w-4 h-4 text-white" />
+          <img src={sunIcon} alt="Temperature" className="w-4 h-4 text-white" />
           {environmentalReadings.temperature}°
         </span>
         <span className="flex items-center gap-1">
-          <img src={wind} alt="Wind" className="w-4 h-4 " />
+          <img src={windIcon} alt="Wind" className="w-4 h-4 " />
           {environmentalReadings.windSpeed}mph
         </span>
         <span className="flex items-center gap-1">
-          <img src={rain} alt="Rain" className="w-4 h-4 " />
+          <img src={rainIcon} alt="Rain" className="w-4 h-4 " />
           {environmentalReadings.rain}mm
         </span>
         <span className="flex items-center gap-1">
-          <img src={humid} alt="Humidity" className="w-4 h-4 " />
+          <img src={humidIcon} alt="Humidity" className="w-4 h-4 " />
           {environmentalReadings.humidity}% humid
         </span>
         <span className="flex items-center gap-1">
-          <img src={visible} alt="Visibility" className="w-4 h-4 " />
+          <img src={visibleIcon} alt="Visibility" className="w-4 h-4 " />
           {environmentalReadings.visibility}mi visible
         </span>
       </div>
