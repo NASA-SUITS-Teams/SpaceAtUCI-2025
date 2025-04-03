@@ -31,7 +31,7 @@ class WebSocketManager {
     }
 
     // publish data to all clients (ex: frontend ui, hmd, etc) by calling specific callback functions
-    // TODO: need to implement callback logic for each client on the frontend
+    // callback logic is stored in polling client
     public publish_all(message: WsMessage, data: any, callback: (data: any) => void) {
         const handlers = this.messageHandlers.get(message.type) || []
 
