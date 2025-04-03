@@ -57,7 +57,7 @@ export function useTelemetry(pollingInterval = 1000): {
         let isMounted = true; // check that component is on the page
         const fetchData = async () => {
             try {
-                const response = await fetch('http://localhost:3000/api/telemetry');
+                const response = await fetch('http://localhost:8000/api/telemetry');
                 if (!response.ok) {throw new Error('Failed to fetch telemetry data');}
                 const result = await response.json(); // parse response from JSON
                 if (isMounted) {

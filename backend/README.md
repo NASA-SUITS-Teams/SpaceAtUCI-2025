@@ -1,21 +1,11 @@
-# backend
-Backend for SUITS 2025
+To install dependencies:
+```sh
+bun install
+```
 
-HonoJS and FastAPI
-
-## To get started
-download dependencies:
-```
-pip install -r requirements.txt
-```
-run the application:
-```
-cd backend
+To run:
+```sh
 bun run dev
 ```
-Open http://localhost:3000 in your browser
 
-**Note:** must first run the TSS Server before running the backend (https://github.com/SUITS-Techteam/TSS-2025). Run the following commands in the TSS Server directory:
-```
-npm install
-```
+open http://localhost:3000

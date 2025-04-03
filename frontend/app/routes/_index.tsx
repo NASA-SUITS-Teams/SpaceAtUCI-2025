@@ -5,6 +5,7 @@ import { StatusBar } from "~/components/StatusBar";
 import { LeftSidebar } from "~/components/LeftSidebar";
 import { MainViewport } from "~/components/MainViewport";
 import { RightSidebar } from "~/components/RightSidebar";
+import { useTelemetry } from "~/utils/apiClient";
 
 export const meta: MetaFunction = () => {
   return [
@@ -76,10 +77,10 @@ export default function Index() {
         />
 
         <MainViewport
-          connection={mockTelemetry.connection}
-          currentTime={mockTelemetry.currentTime}
-          elapsedTime={mockTelemetry.elapsedTime}
-          missionProgress={mockTelemetry.missionProgress}
+          connection={telemetry.data?.connection}
+          currentTime={telemetry.data?.currentTime}
+          elapsedTime={telemetry.data?.elapsedTime}
+          missionProgress={telemetry.data?.missionProgress}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
         />

@@ -5,6 +5,7 @@ class UDPClient {
     private client: dgram.Socket;
     private TSS_PORT = 14141;
     private TSS_IP = '172.31.130.188:14141';
+    private responseHandlers: Map<number, (data: any) => void> = new Map();
 
     constructor() {
         this.client = dgram.createSocket('udp4');
@@ -23,40 +24,43 @@ class UDPClient {
         });
     }
 
-    // public startListening() {
-    //     try {
-    //         this.client.bind(this.TSS_PORT, () => {
-    //             console.log(`UDP server listening on port ${this.TSS_PORT}`);
-    //         })
-    //     } catch (error) {
-    //         console.error(`UDP server bind error:`, error);
-    //     }
-    // }
-
-    public sendMessage(message: string, host: string)  {
-        this.client.send(message, 0, message.length, this.TSS_PORT, host, (err) => {
-            if (err) {
-                console.error(`UDP message send error:`, err);
-            } else {
-                console.log(`UDP message sent to ${host}:${this.TSS_PORT}`);
-            }
-        }); 
-    };
-
-    private parseMessage(message: Buffer) {
+    // receive messages from TSS
+    private handleResponse(message: Buffer) {
         const timestamp = message.readUInt32BE(0);
         const command = message.readInt32BE(4);
-        const data  = message.slice(8).toString('utf-8');
+        let data: number | number[] = message.readFloatBE(8);
+        // handle lidar data (command 167)
+        if (command === 167) {
+            data = [];
+            for (let i = 0; i < 13; ++i) {
+                data.push(message.readFloatBE(8 + (i * 4)));
+            }
+        }
 
-        console.log(`Timestamp: ${timestamp}, Command: ${command}, Data: ${data}`);
-
-        try {
-            const jsonData = JSON.parse(data);
-            console.log(`Parsed JSON: ${jsonData}`);
-        } catch (error) {
-            console.error(`Error parsing JSON: ${error}`);
-        } 
+        // call the handler for the command
+        const handler = this.responseHandlers.get(command);
+        if (handler) { handler(data); }
     }
+
+    // register a handler for a command
+    public onResponse(command: number, handler: (data: any) => void) {
+        this.responseHandlers.set(command, handler);
+    }
+
+    // private parseMessage(message: Buffer) {
+    //     const timestamp = message.readUInt32BE(0);
+    //     const command = message.readInt32BE(4);
+    //     const data  = message.slice(8).toString('utf-8');
+
+    //     console.log(`Timestamp: ${timestamp}, Command: ${command}, Data: ${data}`);
+
+    //     try {
+    //         const jsonData = JSON.parse(data);
+    //         console.log(`Parsed JSON: ${jsonData}`);
+    //     } catch (error) {
+    //         console.error(`Error parsing JSON: ${error}`);
+    //     } 
+    // }
 
     public sendCommand(command: number, value: number) {
         /**
@@ -85,8 +89,3 @@ class UDPClient {
 }
 
 export const udpClient = new UDPClient();
-
-//* tests
-// udpClient.startListening(); 
-udpClient.sendMessage('Test message', 'localhost');
-udpClient.sendCommand(16, 0.0); // get dcu data
