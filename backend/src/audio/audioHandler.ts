@@ -15,3 +15,43 @@ interface TranscriptionSession {
 
 // store active transcription sessions as a map of sessionId to TranscriptionSession
 const activeSessions: Map<string, TranscriptionSession> = new Map();
+
+export async function handleAudioMessage(message: Buffer, ws: ServerWebSocket) {
+    // route to appropriate handle based on the message type
+    switch (message.type) {        
+        case "start_transcription":
+            handleStartTranscription(message, ws);
+            break;
+        // handle receiving message from the client
+        case "audio_chunk":
+            await handleAudioChunk(message, ws); 
+            break;
+        case "end_transcription":
+            await handleEndTranscription(message, ws);
+            break;
+        default:
+            console.log("Unknown message type");
+            break;
+    }
+}
+
+//----- Handler functions -----
+function handleStartTranscription(message: any, ws: ServerWebSocket) {
+    // channels is the number of audio channels in the stream (ex: 1 for mono, 2 for stereo)
+    const { sessionId, sampleRate, channels } = message;
+
+    if (!sessionId || !sampleRate || !channels) {
+        sendMessage(ws, "error", { message: "Invalid start transcription message" }, false);
+        return;
+    }
+
+    // create a new session
+    activeSessions.set(sessionId, {
+        sessionId: sessionId,
+        sampleRate: sampleRate || 44100,
+        channels: channels || 1,
+        audioChunks: []
+    });
+
+    sendMessage(ws, "start_transcription_response", { sessionId: sessionId }, true);
+}
