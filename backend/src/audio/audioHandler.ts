@@ -55,3 +55,67 @@ function handleStartTranscription(message: any, ws: ServerWebSocket) {
 
     sendMessage(ws, "start_transcription_response", { sessionId: sessionId }, true);
 }
+// handles incoming audio chunks from the client
+// audio chunks are added to the active session
+function handleAudioChunk(message: any, ws: ServerWebSocket) {
+    const { sessionId, chunk } = message;
+
+    if (!sessionId || !chunk) {
+        sendMessage(ws, "error", { message: "Invalid audio chunk message" }, false);
+        return;
+    }
+    // get the current session from the session ID
+    const session = activeSessions.get(sessionId);
+    if (!session) {
+        sendMessage(ws, "error", { message: "Session not found" }, false);
+        return;
+    }
+
+    // turn base64 audio chunk into a buffer of bytes
+    // this will be used to transcribe the audio
+    // base64 is easier to send over the network while bytes is easier to process
+    const audioBuffer = Buffer.from(chunk, "base64");
+
+    // store the byte representation of the chunk to the session list 
+    session.audioChunks.push(audioBuffer);
+
+    // transcribe each chunk as it comes in
+    // transcribe every 3 chunks at a time
+    // combined chunks into a single buffer
+    // prepares the transcription to send back to the client
+    if (session.audioChunks.length % 3 === 0) {
+        const recentChunks = session.audioChunks.slice(-3);
+        const combinedAudio = Buffer.concat(recentChunks); 
+        const transcription = await transcribeAudio(combinedAudio, session.sampleRate, session.channels);
+        sendMessage(ws, "transcription_result", { transcription: transcription }, true);
+    }
+}
+
+async function handleEndTranscription(message: any, ws: ServerWebSocket) {
+    const { sessionId } = message;
+
+    if (!sessionId) {
+        sendMessage(ws, "error", { message: "Invalid end transcription message" }, false);
+        return;
+    }
+
+    const session = activeSessions.get(sessionId);
+    if (!session) {
+        sendMessage(ws, "error", { message: "Session not found" }, false);
+        return;
+    }
+
+    // combine all audio chunks
+    const combinedAudio = Buffer.concat(session.audioChunks);
+    const finalTranscription = await transcribeAudio(combinedAudio, session.sampleRate, session.channels);
+    
+    // send transcription to client via websocket
+    sendMessage(ws, "transcription_complete", {
+        sessionId: sessionId,
+        transcription: finalTranscription
+    }, true);
+
+    // clear the session
+    activeSessions.delete(sessionId);
+    console.log("Session cleared");
+}
