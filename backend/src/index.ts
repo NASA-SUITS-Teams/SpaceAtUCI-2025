@@ -118,6 +118,24 @@ app.get("/api/telemetry", (c) => {
   }
 });
 
+// endpoint to process audio message and send transcription
+// takes in the audio message as input and returns the transcription
+app.get("/api/audio-transcription", upgradeWebSocket((c) => {
+  return {
+    onOpen: () => {
+      console.log("Connection opened");
+    },
+    // take in audio message as the input (event.data)
+    onMessage: async (event, ws) => {
+      const message = JSON.parse(event.data.toString()); // stores the audio message as a series of bytes
+      handleAudioMessage(message, ws);
+    },
+    onClose: () => {
+      console.log("Connection closed");
+    }
+  }
+}))
+
 // get port
 const port = process.argv.includes('--port') 
   ? parseInt(process.argv[process.argv.indexOf('--port') + 1]) 
