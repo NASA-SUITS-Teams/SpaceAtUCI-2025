@@ -16,7 +16,7 @@ interface TranscriptionSession {
 // store active transcription sessions as a map of sessionId to TranscriptionSession
 const activeSessions: Map<string, TranscriptionSession> = new Map();
 
-export async function handleAudioMessage(message: Buffer, ws: ServerWebSocket) {
+export async function handleAudioMessage(message: any, ws: ServerWebSocket) {
     // route to appropriate handle based on the message type
     switch (message.type) {        
         case "start_transcription":
@@ -57,7 +57,7 @@ function handleStartTranscription(message: any, ws: ServerWebSocket) {
 }
 // handles incoming audio chunks from the client
 // audio chunks are added to the active session
-function handleAudioChunk(message: any, ws: ServerWebSocket) {
+async function handleAudioChunk(message: any, ws: ServerWebSocket) {
     const { sessionId, chunk } = message;
 
     if (!sessionId || !chunk) {
