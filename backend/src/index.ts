@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { createBunWebSocket } from "hono/bun";
 import type { ServerWebSocket } from "bun";
 import { udpClient } from "./utils/udpClient";
+import { handleAudioMessage } from "./audio/audioHandler";
 
 const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket>();
 
@@ -127,8 +128,9 @@ app.get("/api/audio-transcription", upgradeWebSocket((c) => {
     },
     // take in audio message as the input (event.data)
     onMessage: async (event, ws) => {
+      if (!ws.raw) return; // check if the connection is valid
       const message = JSON.parse(event.data.toString()); // stores the audio message as a series of bytes
-      handleAudioMessage(message, ws);
+      await handleAudioMessage(message, ws.raw);
     },
     onClose: () => {
       console.log("Connection closed");

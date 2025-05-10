@@ -44,7 +44,8 @@ export async function transcribeAudio(
         --output_dir ${transcriptsDir}`);
 
     // read the transcription from the output file
-    const transcriptionPath = path.join(os.tmpdir(), `temp_audio_${Date.now()}.txt`);
+    const transcriptionFilename = path.basename(wavFilePath, '.wav') + '.txt';
+    const transcriptionPath = path.join(transcriptsDir, transcriptionFilename);
     let transcription = ""; 
 
     // check if the file exists and only read if it does
@@ -54,6 +55,10 @@ export async function transcribeAudio(
 
     // delete the temporary files after use
     fs.unlinkSync(wavFilePath);
+    if (fs.existsSync(transcriptionPath)) {
+        fs.unlinkSync(transcriptionPath);
+    }
+
     // save the transcription to the db
     fs.writeFileSync(transcriptionPath, transcription);
 
