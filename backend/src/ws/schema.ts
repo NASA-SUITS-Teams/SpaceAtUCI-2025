@@ -41,3 +41,19 @@ export function sendError(
 ) {
   sendMessage(ws, type, data, false, { message, code, details });
 }
+
+
+export type RockData = {
+  evaId: 1 | 2;
+  specId: number;
+  oxygen: number;
+  water: number;
+  co2: number;
+  h2: number;
+  n2: number;
+  other: number;
+  temperature: number;
+  pressure: number;
+  humidity: number;
+  light: number;
+};
