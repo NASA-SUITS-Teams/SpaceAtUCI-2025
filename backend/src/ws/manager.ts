@@ -1,67 +1,70 @@
-import { WsMessage } from './schema'
+import type { ServerWebSocket } from "bun"; // Added Bun type
+import { WsMessage } from "./schema";
+
 class WebSocketManager {
-    private websocket: WebSocket;
-    private messageHandlers: Map<string, ((data: any) => void)[]> = new Map(); //map each message type to a callback function
+  // Removed: private websocket: WebSocket;
+  // Removed: private messageHandlers ... (Subscribing logic needs rethink for server-side)
+  private clients: Set<ServerWebSocket> = new Set(); // Store active server connections
 
-    constructor(url: string = "ws://localhost:3000/ws") {
-        this.websocket = new WebSocket(url);
-        this.setupSocketHandlers();
+  constructor() {
+    // Removed constructor logic that created a client WebSocket
+    console.log("WebSocketManager (Server-Side) initialized.");
+  }
+
+  // Method for Hono to add a client when it connects
+  public addClient(ws: ServerWebSocket): void {
+    console.log("Adding client to WebSocketManager");
+    this.clients.add(ws);
+  }
+
+  // Method for Hono to remove a client when it disconnects
+  public removeClient(ws: ServerWebSocket): void {
+    console.log("Removing client from WebSocketManager");
+    this.clients.delete(ws);
+  }
+
+  // Publish data to all connected clients
+  public publish_all(
+    message: WsMessage,
+    data: any,
+    callback?: (data: any) => void
+  ) {
+    // Removed old handler logic
+    console.log(
+      `Publishing message type ${message.type} to ${this.clients.size} clients`
+    );
+    const messageString = JSON.stringify(message); // Use the message passed in
+
+    this.clients.forEach((client) => {
+      try {
+        // Check readyState before sending (optional but good practice)
+        if (client.readyState === WebSocket.OPEN) {
+          // Use WebSocket global for readyState const
+          client.send(messageString);
+        } else {
+          console.warn("Attempted to send message to non-open socket.");
+          // Optionally remove client if state is closed/closing
+          // this.removeClient(client);
+        }
+      } catch (error) {
+        console.error("Error sending message to client:", error);
+        // Optionally remove the faulty client
+        // this.removeClient(client);
+      }
+    });
+
+    // The server-side callback doesn't make as much sense here
+    // Callbacks are usually for *receiving* messages
+    // Kept optional callback signature for compatibility with PollingClient for now
+    if (callback) {
+      // This callback was previously used to notify listeners *within* the server
+      // Keep this behaviour if needed by PollingClient logic
+      callback(data);
     }
+  }
 
-    // callback functions for websocket events
-    private setupSocketHandlers() {
-        this.websocket.onopen = () => {
-            console.log("Connected to the server")
-        }
-        
-        this.websocket.onmessage = (event) => {
-            const message: WsMessage = JSON.parse(event.data)
-            console.log(message)
-        }
-        
-        this.websocket.onclose = () => {
-            this.websocket.close()
-            console.log("Disconnected from the server")
-        }
-        
-        this.websocket.onerror = (error) => {
-            console.log(error)
-            this.websocket.close()
-        }
-    }
-
-    // publish data to all clients (ex: frontend ui, hmd, etc) by calling specific callback functions
-    // callback logic is stored in polling client
-    public publish_all(message: WsMessage, data: any, callback: (data: any) => void) {
-        const handlers = this.messageHandlers.get(message.type) || []
-
-        if (!handlers || handlers.length === 0) {
-            console.log(`No handlers for message type: ${message.type}`)
-            return;
-        }
-        try {
-            handlers.forEach(handler => handler(data)) // attach callback function to data
-        } catch (error) {
-            console.error(`Error publishing message: ${message.type}`, error)
-        }
-    }
-
-    // subscribe to a message type
-    public subscribe(message: WsMessage, callback: (data: any) => void) {
-        const handlers = this.messageHandlers.get(message.type) || [] // get callbacks for a msg type
-        handlers.push(callback) // push to a new callback array
-        this.messageHandlers.set(message.type, handlers) // set new array to msg type
-    }
-
-    // send message to server
-    public send(type: string, data: any) {
-        const message: WsMessage = {
-            type,
-            data,
-            success: true
-        };
-        this.websocket.send(JSON.stringify(message));
-    }
+  // Removed subscribe method - Server doesn't subscribe to its own broadcasts
+  // Removed send method - Server uses publish_all or sends directly via ws instance
 }
 
 // singleton instance

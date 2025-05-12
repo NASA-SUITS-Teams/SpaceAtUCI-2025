@@ -31,6 +31,13 @@ export function sendMessage(
   ws.send(JSON.stringify(message));
 }
 
-export function sendError(ws: ServerWebSocket, type: string, data: any, message: string, code: number = 0, details?: Record<string, unknown>) {
+export function sendError(
+  ws: ServerWebSocket,
+  type: string,
+  data: any,
+  message: string,
+  code: number = 0,
+  details?: Record<string, unknown>
+) {
   sendMessage(ws, type, data, false, { message, code, details });
 }

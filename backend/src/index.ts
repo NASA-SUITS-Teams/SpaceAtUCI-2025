@@ -1,12 +1,15 @@
+console.log("Starting backend/backend/src/index.ts");
 import { Hono } from "hono";
 import { createBunWebSocket } from "hono/bun";
 import type { ServerWebSocket } from "bun";
-import { udpClient } from "./utils/udpClient";
-import { handleAudioMessage } from "./audio/audioHandler";
+import { wsManager } from "./ws/manager";
+import "./polling";
 
 const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket>();
 
 const app = new Hono();
+
+console.log("Hono app initialized.");
 
 app.get("/api/", (c) => {
   return c.text("Hello Hono!");
@@ -15,136 +18,96 @@ app.get("/api/", (c) => {
 app.get(
   "/ws",
   upgradeWebSocket((c) => {
+    console.log("WebSocket upgrade request received.");
     return {
+      onOpen(event, ws) {
+        console.log("WebSocket connection opened.");
+        if (ws.raw) {
+          wsManager.addClient(ws.raw);
+        } else {
+          console.error("ws.raw is undefined in onOpen");
+        }
+      },
       onMessage(event, ws) {
         console.log(`Message from client: ${event.data}`);
-        ws.send("Hello from server!");
       },
-      onClose: () => {
+      onClose: (event, ws) => {
         console.log("Connection closed");
+        if (ws.raw) {
+          wsManager.removeClient(ws.raw);
+        } else {
+          console.error("ws.raw is undefined in onClose");
+        }
+      },
+      onError: (event, ws) => {
+        console.error("WebSocket error:", event);
+        if (ws.raw) {
+          wsManager.removeClient(ws.raw);
+        } else {
+          console.error("ws.raw is undefined in onError");
+        }
       },
     };
   })
 );
 
-/**
- * TODO: 
- * - replace mock data with actual data from the TSS server
- * - implement async request system ( await responses and updates from telemetry data)
- *  */ 
-app.get("/api/telemetry", (c) => {
-  try {
-       // ----- MOCK DATA -----
-      const telemetryData = {
-        connection: "Connected",
-        currentTime: new Date().toLocaleTimeString(),
-        elapsedTime: "00:00:00", // Will be calculated
-        missionProgress: 0,
-        rover: {
-          heading: 0,
-          speed: 0,
-          battery: 0,
-          temperature: 0,
-        },
-        crew: {
-          ev1: {
-            heartRate: 0,
-            oxygenTank: 0,
-            bloodPressure: 0,
-            temperature: 0,
-          },
-          ev2: {
-            heartRate: 0,
-            oxygenTank: 0,
-            bloodPressure: 0,
-            temperature: 0,
-          },
-        },
-        environmentalReadings: {
-          temperature: 0,
-          rain: 0,
-          humidity: 0,
-          visibility: 0,
-          windSpeed: 0,
-        },
-        samples: [],
-        uiaData: {
-          eva1_power: false,
-          eva1_oxy: false,
-          eva1_water_waste: false,
-          eva1_water_supply: false,
-          eva2_power: false,
-          eva2_oxy: false,
-          eva2_water_waste: false,
-          eva2_water_supply: false,
-          oxy_vent: false,
-          depress: false,
-        },
-        dcuData: {
-          eva1_batt: false,
-          eva1_oxy: false,
-          eva1_comm: false,
-          eva1_fan: false,
-          eva1_pump: false,
-          eva1_co2: false,
-          eva2_batt: false,
-          eva2_oxy: false,
-          eva2_comm: false,
-          eva2_fan: false,
-          eva2_pump: false,
-          eva2_co2: false,
-        }
-      };
-      // ----- MOCK DATA -----
+// Add test rock data sending
+let testInterval: ReturnType<typeof setInterval> | null = null;
 
-      // test udp connection
-      const teamNumber = 1.0;
-      udpClient.sendCommand(58, teamNumber);
-      udpClient.sendCommand(23, 0.0); // POSX
-      udpClient.sendCommand(24, 0.0); // POSY
-      udpClient.sendCommand(25, 0.0); // QR ID
-      // Request UIA states (commands 48-57)
-      for (let i = 48; i <= 57; i++) {
-        udpClient.sendCommand(i, 0.0);
-      }
-      // Request DCU states (commands 2-13)
-      for (let i = 2; i <= 13; i++) {
-        udpClient.sendCommand(i, 0.0);
-      }
-
-      return c.json(telemetryData);
-  } catch (error) {
-    console.error(error);
-    return c.json({ error: "Failed to fetch telemetry data" }, 500);
+app.get("/api/test/start", (c) => {
+  if (testInterval) {
+    clearInterval(testInterval);
   }
+
+  testInterval = setInterval(() => {
+    const testRockData = {
+      evaId: 1,
+      specId: 123,
+      oxygen: 21.5,
+      water: 0.5,
+      co2: 0.04,
+      h2: 0.0,
+      n2: 78.0,
+      other: 0.0,
+      temperature: 25.0,
+      pressure: 101325.0,
+      humidity: 45.0,
+      light: 1000.0,
+    };
+
+    wsManager.publish_all(
+      {
+        type: "rock_data",
+        data: testRockData,
+        success: true,
+      },
+      testRockData
+    );
+  }, 3000); // Send every 3 seconds
+
+  return c.text("Test rock data sending started");
 });
 
-// endpoint to process audio message and send transcription
-// takes in the audio message as input and returns the transcription
-app.get("/api/audio-transcription", upgradeWebSocket((c) => {
-  return {
-    onOpen: () => {
-      console.log("Connection opened");
-    },
-    // take in audio message as the input (event.data)
-    onMessage: async (event, ws) => {
-      if (!ws.raw) return; // check if the connection is valid
-      const message = JSON.parse(event.data.toString()); // stores the audio message as a series of bytes
-      await handleAudioMessage(message, ws.raw);
-    },
-    onClose: () => {
-      console.log("Connection closed");
-    }
+app.get("/api/test/stop", (c) => {
+  if (testInterval) {
+    clearInterval(testInterval);
+    testInterval = null;
   }
-}))
+  return c.text("Test rock data sending stopped");
+});
 
-// get port
-const port = process.argv.includes('--port') 
-  ? parseInt(process.argv[process.argv.indexOf('--port') + 1]) 
-  : 8000;
+// --- Explicitly start the server ---
+const port = parseInt(process.env.PORT || "3000", 10);
+console.log(`Starting server on port ${port}...`);
 
-export default {
+Bun.serve({
   fetch: app.fetch,
-  websocket,
-  port
-};
+  websocket: websocket, // Use the websocket handler from createBunWebSocket
+  port: port,
+});
+
+console.log(`Server listening on http://localhost:${port}`);
+
+console.log(
+  "Finished backend/backend/src/index.ts setup - Server should be running."
+); // This line might not be reached if Bun.serve blocks
