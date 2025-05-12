@@ -226,6 +226,9 @@ export class PollingClient {
       try {
         const data = await this.fetchData();
         if (data) {
+          if (this.dataType === DATA_TYPES.LOW_FREQUENCY) {
+            this.handleLowFrequencyData(data as LowFrequencyData);
+          }
           wsManager.publish_all(
             {
               type: this.dataType,
@@ -454,6 +457,11 @@ export class PollingClient {
   }
 
   private handleLowFrequencyData(data: LowFrequencyData) {
+    console.log(
+      "Processing low frequency data:",
+      JSON.stringify(data, null, 2)
+    );
+
     // Handle rock data for EVA 1
     if (data.eva1_spec_id !== undefined) {
       const eva1RockData: RockData = {
@@ -470,6 +478,10 @@ export class PollingClient {
         humidity: data.eva1_spec_humid || 0,
         light: data.eva1_spec_light || 0,
       };
+      console.log(
+        "Sending EVA 1 rock data:",
+        JSON.stringify(eva1RockData, null, 2)
+      );
       wsManager.publish_all(
         { type: "rock_data", data: eva1RockData, success: true },
         eva1RockData
@@ -492,6 +504,10 @@ export class PollingClient {
         humidity: data.eva2_spec_humid || 0,
         light: data.eva2_spec_light || 0,
       };
+      console.log(
+        "Sending EVA 2 rock data:",
+        JSON.stringify(eva2RockData, null, 2)
+      );
       wsManager.publish_all(
         { type: "rock_data", data: eva2RockData, success: true },
         eva2RockData

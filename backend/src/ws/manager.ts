@@ -29,36 +29,26 @@ class WebSocketManager {
     data: any,
     callback?: (data: any) => void
   ) {
-    // Removed old handler logic
-    console.log(
-      `Publishing message type ${message.type} to ${this.clients.size} clients`
-    );
-    const messageString = JSON.stringify(message); // Use the message passed in
+    if (message.type === "low_frequency" || message.type === "rock_data") {
+      console.log(
+        `Sending ${message.type} data:`,
+        JSON.stringify(message, null, 2)
+      );
+    }
 
     this.clients.forEach((client) => {
       try {
-        // Check readyState before sending (optional but good practice)
         if (client.readyState === WebSocket.OPEN) {
-          // Use WebSocket global for readyState const
-          client.send(messageString);
+          client.send(JSON.stringify(message));
         } else {
           console.warn("Attempted to send message to non-open socket.");
-          // Optionally remove client if state is closed/closing
-          // this.removeClient(client);
         }
       } catch (error) {
         console.error("Error sending message to client:", error);
-        // Optionally remove the faulty client
-        // this.removeClient(client);
       }
     });
 
-    // The server-side callback doesn't make as much sense here
-    // Callbacks are usually for *receiving* messages
-    // Kept optional callback signature for compatibility with PollingClient for now
     if (callback) {
-      // This callback was previously used to notify listeners *within* the server
-      // Keep this behaviour if needed by PollingClient logic
       callback(data);
     }
   }
