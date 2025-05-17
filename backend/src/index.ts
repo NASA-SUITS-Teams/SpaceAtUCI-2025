@@ -58,6 +58,7 @@ Bun.serve({
   fetch: app.fetch,
   websocket: websocket,
   port: port,
+  hostname: "0.0.0.0",
 });
 
 console.log(`Server listening on http://localhost:${port}`);

@@ -62,28 +62,28 @@ export interface LowFrequencyData extends TelemetryData {
   fan_error?: number;
   // EVA 1 SPEC (Commands 26-36)
   eva1_spec_id?: number;
-  eva1_spec_oxy?: number;
-  eva1_spec_water?: number;
-  eva1_spec_co2?: number;
-  eva1_spec_h2?: number;
-  eva1_spec_n2?: number;
-  eva1_spec_other?: number;
-  eva1_spec_temp?: number;
-  eva1_spec_pres?: number;
-  eva1_spec_humid?: number;
-  eva1_spec_light?: number;
+  eva1_sio2?: number;
+  eva1_al2o3?: number;
+  eva1_mno?: number;
+  eva1_cao?: number;
+  eva1_p2o3?: number;
+  eva1_tio2?: number;
+  eva1_feo?: number;
+  eva1_mgo?: number;
+  eva1_k2o?: number;
+  eva1_rock_other?: number;
   // EVA 2 SPEC (Commands 37-47)
   eva2_spec_id?: number;
-  eva2_spec_oxy?: number;
-  eva2_spec_water?: number;
-  eva2_spec_co2?: number;
-  eva2_spec_h2?: number;
-  eva2_spec_n2?: number;
-  eva2_spec_other?: number;
-  eva2_spec_temp?: number;
-  eva2_spec_pres?: number;
-  eva2_spec_humid?: number;
-  eva2_spec_light?: number;
+  eva2_sio2?: number;
+  eva2_al2o3?: number;
+  eva2_mno?: number;
+  eva2_cao?: number;
+  eva2_p2o3?: number;
+  eva2_tio2?: number;
+  eva2_feo?: number;
+  eva2_mgo?: number;
+  eva2_k2o?: number;
+  eva2_rock_other?: number;
   // UIA (Commands 48-57)
   uia_emu1_power?: number;
   uia_ev1_supply?: number;

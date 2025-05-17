@@ -12,154 +12,62 @@ import {
 } from "./types";
 import { wsManager } from "../ws/manager";
 import { RockData } from "../ws/schema";
+import { COMMAND_MAP } from "./commandMap";
 
-// Command number to data field mapping based on TSS README
-const COMMAND_MAP: { [key: number]: string } = {
-  // EVA1 DCU (Commands 2-7)
-  2: "eva1_batt", // SUIT BATT / UMBILICAL POWER
-  3: "eva1_oxy", // PRI TANK / SEC TANK
-  4: "eva1_comm", // Channel A / Channel B
-  5: "eva1_fan", // PRI FAN / SEC FAN
-  6: "eva1_pump", // OPEN / CLOSED
-  7: "eva1_co2", // Scrubber A / Scrubber B
-  // EVA2 DCU (Commands 8-13)
-  8: "eva2_batt",
-  9: "eva2_oxy",
-  10: "eva2_comm",
-  11: "eva2_fan",
-  12: "eva2_pump",
-  13: "eva2_co2",
-  // Error States (Commands 14-16) - Names assumed based on UI
-  14: "o2_error",
-  15: "pump_error",
-  16: "fan_error",
-  // EVA1 IMU (Commands 17-19)
-  17: "eva1_imu_posx",
-  18: "eva1_imu_posy",
-  19: "eva1_imu_heading",
-  // EVA2 IMU (Commands 20-22)
-  20: "eva2_imu_posx",
-  21: "eva2_imu_posy",
-  22: "eva2_imu_heading",
-  // ROVER (Commands 23-25)
-  23: "rover_posx",
-  24: "rover_posy",
-  25: "rover_qr_id",
-  // EVA 1 SPEC (Commands 26-36, excluding 'name') - Names are generic
-  26: "eva1_spec_id", // SPEC ID
-  27: "eva1_spec_oxy", // Example: Assuming first data point relates to Oxygen
-  28: "eva1_spec_water", // Example: Assuming second data point relates to Water
-  29: "eva1_spec_co2",
-  30: "eva1_spec_h2",
-  31: "eva1_spec_n2",
-  32: "eva1_spec_other", // Generic names for remaining SPEC data
-  33: "eva1_spec_temp",
-  34: "eva1_spec_pres",
-  35: "eva1_spec_humid",
-  36: "eva1_spec_light", // Last SPEC data point
-  // EVA 2 SPEC (Commands 37-47, excluding 'name') - Names are generic
-  37: "eva2_spec_id", // SPEC ID
-  38: "eva2_spec_oxy",
-  39: "eva2_spec_water",
-  40: "eva2_spec_co2",
-  41: "eva2_spec_h2",
-  42: "eva2_spec_n2",
-  43: "eva2_spec_other",
-  44: "eva2_spec_temp",
-  45: "eva2_spec_pres",
-  46: "eva2_spec_humid",
-  47: "eva2_spec_light",
-  // UIA (Commands 48-57)
-  48: "uia_emu1_power", // ON / OFF
-  49: "uia_ev1_supply", // OPEN / CLOSED
-  50: "uia_ev1_waste", // OPEN / CLOSED
-  51: "uia_ev1_oxygen", // OPEN / CLOSED
-  52: "uia_emu2_power", // ON / OFF
-  53: "uia_ev2_supply", // OPEN / CLOSED
-  54: "uia_ev2_waste", // OPEN / CLOSED
-  55: "uia_ev2_oxygen", // OPEN / CLOSED
-  56: "uia_o2_vent", // OPEN / CLOSED
-  57: "uia_depress_pump", // ON / OFF
-  // TELEMETRY / EVA (Commands 58-118) - Ignoring team number dependency for now
-  58: "eva_time", // Current EVA time
-  // EVA1 Telemetry (Commands 59-80) - Names based on UI screenshot where possible
-  59: "eva1_batt_time_left", // Primary O2 Storage / O2 Time Left? - Name Uncertain
-  60: "eva1_oxy_pri_storage", // Primary O2 Storage
-  61: "eva1_oxy_sec_storage", // Secondary O2 Storage
-  62: "eva1_oxy_pri_pressure", // Primary O2 Pressure
-  63: "eva1_oxy_sec_pressure", // Secondary O2 Pressure
-  64: "eva1_suit_pressure_oxy", // Suit O2 Pressure
-  65: "eva1_suit_pressure_co2", // Suit CO2 Pressure
-  66: "eva1_suit_pressure_other", // Suit Other Pressure
-  67: "eva1_suit_pressure_total", // Suit Total Pressure
-  68: "eva1_scrubber_a_pressure", // Scrubber A Pressure
-  69: "eva1_scrubber_b_pressure", // Scrubber B Pressure
-  70: "eva1_h2o_gas_pressure", // H2O Gas Pressure
-  71: "eva1_h2o_liquid_pressure", // H2O Liquid Pressure
-  72: "eva1_oxy_consumption", // O2 Consumption
-  73: "eva1_co2_production", // CO2 Production
-  74: "eva1_fan_pri_rpm", // Primary Fan RPM
-  75: "eva1_fan_sec_rpm", // Secondary Fan RPM
-  76: "eva1_helmet_pressure_co2", // Helmet CO2 Pressure
-  77: "eva1_heart_rate", // Heart Rate
-  78: "eva1_temperature", // Temperature
-  79: "eva1_coolant_gas_pressure", // Coolant (Gas Pressure?) - Name Uncertain
-  80: "eva1_coolant_liquid_pressure", // Coolant (Liquid Pressure?) - Name Uncertain
-  // EVA2 Telemetry (Commands 81-102) - Names based on UI screenshot where possible
-  81: "eva2_batt_time_left",
-  82: "eva2_oxy_pri_storage",
-  83: "eva2_oxy_sec_storage",
-  84: "eva2_oxy_pri_pressure",
-  85: "eva2_oxy_sec_pressure",
-  86: "eva2_suit_pressure_oxy",
-  87: "eva2_suit_pressure_co2",
-  88: "eva2_suit_pressure_other",
-  89: "eva2_suit_pressure_total",
-  90: "eva2_scrubber_a_pressure",
-  91: "eva2_scrubber_b_pressure",
-  92: "eva2_h2o_gas_pressure",
-  93: "eva2_h2o_liquid_pressure",
-  94: "eva2_oxy_consumption",
-  95: "eva2_co2_production",
-  96: "eva2_fan_pri_rpm",
-  97: "eva2_fan_sec_rpm",
-  98: "eva2_helmet_pressure_co2",
-  99: "eva2_heart_rate",
-  100: "eva2_temperature",
-  101: "eva2_coolant_gas_pressure", // Name Uncertain
-  102: "eva2_coolant_liquid_pressure", // Name Uncertain
-  // Generic EVA States (Commands 103-118) - Names are generic placeholders
-  103: "eva_state_103",
-  104: "eva_state_104",
-  105: "eva_state_105",
-  106: "eva_state_106",
-  107: "eva_state_107",
-  108: "eva_state_108",
-  109: "eva_state_109",
-  110: "eva_state_110",
-  111: "eva_state_111",
-  112: "eva_state_112",
-  113: "eva_state_113",
-  114: "eva_state_114",
-  115: "eva_state_115",
-  116: "eva_state_116",
-  117: "eva_state_117",
-  118: "eva_state_118",
-  // Pressurized Rover Telemetry (Commands 119-166) - Names are generic placeholders
-  119: "pr_telemetry_119",
-  120: "pr_telemetry_120",
-  // ... continuing pattern ...
-  166: "pr_telemetry_166",
-  // Pressurized Rover LIDAR (Command 167) - Special case, returns 13 floats
-  167: "pr_lidar", // Placeholder name, actual parsing not implemented
+const DEFAULT_ROCK_NAMES: Record<number, string> = {
+  0: "default_rock",
+  1: "mare_basalt",
+  2: "vesicular_basalt",
+  3: "olivine_basalt_1",
+  4: "feldspathic_basalt",
+  5: "pigeonite_basalt",
+  6: "olivine_basalt_2",
+  7: "ilmenite_basalt",
+  8: "ilmenite_basalt",
+  9: "ilmenite_basalt",
+  10: "brecia_granite",
+  11: "kreep_breccia",
+  12: "ancient_regolith_breccia",
+  13: "vitric_matrix_breccia",
+  14: "ilmenite_basalt",
 };
 
-// Generate generic names for range 121-165 for PR Telemetry
-for (let i = 120; i <= 166; i++) {
-  if (!COMMAND_MAP[i]) {
-    COMMAND_MAP[i] = `pr_telemetry_${i}`;
+// Rate limiter for different data types
+type DataTypeKey = "IMU" | "ROCK" | "DCU" | "UIA" | "BIOMETRICS";
+
+const PUBLISH_INTERVALS: Record<DataTypeKey, number> = {
+  IMU: 1000, // IMU data: once per second
+  ROCK: 2000, // Rock data: once every 2 seconds
+  DCU: 1000, // DCU data: once per second
+  UIA: 1000, // UIA data: once per second
+  BIOMETRICS: 2000, // Biometrics: once every 2 seconds
+};
+
+// Last publish timestamps
+const lastPublishTimes: Record<DataTypeKey, number> = {
+  IMU: 0,
+  ROCK: 0,
+  DCU: 0,
+  UIA: 0,
+  BIOMETRICS: 0,
+};
+
+// Helper function to check rate limiting
+function shouldPublish(dataType: DataTypeKey): boolean {
+  const currentTime = Date.now();
+  const interval = PUBLISH_INTERVALS[dataType];
+  const lastTime = lastPublishTimes[dataType];
+
+  if (currentTime - lastTime >= interval) {
+    lastPublishTimes[dataType] = currentTime;
+    return true;
   }
+  return false;
 }
+
+// Rate limiter for IMU data (1 second)
+const IMU_PUBLISH_INTERVAL = 1000; // 1 second in milliseconds
+let lastImuPublishTime = 0;
 
 /**
  * Fetches data from the TSS via UDP at regular intervals and sends to listeners
@@ -226,20 +134,15 @@ export class PollingClient {
       try {
         const data = await this.fetchData();
         if (data) {
+          // Process data based on type
           if (this.dataType === DATA_TYPES.LOW_FREQUENCY) {
             this.handleLowFrequencyData(data as LowFrequencyData);
+          } else if (this.dataType === DATA_TYPES.HIGH_FREQUENCY) {
+            this.handleHighFrequencyData(data);
           }
-          wsManager.publish_all(
-            {
-              type: this.dataType,
-              data,
-              success: true,
-            },
-            data,
-            (wsData) => {
-              this.listeners.forEach((listener) => listener(wsData));
-            }
-          );
+
+          // Don't send raw data anymore - all data is now sent through specialized handlers
+          // with rate limiting
         }
       } catch (error) {}
 
@@ -249,14 +152,8 @@ export class PollingClient {
 
   private getCommandsForDataType(): number[] {
     if (this.dataType === DATA_TYPES.HIGH_FREQUENCY) {
-      // EVA1 DCU, All IMU, Rover Pos/QR
+      // All IMU, Rover Pos/QR (removing EVA1 DCU)
       return [
-        2,
-        3,
-        4,
-        5,
-        6,
-        7, // EVA1 DCU
         17,
         18,
         19, // EVA1 IMU
@@ -268,10 +165,11 @@ export class PollingClient {
         25, // ROVER
       ];
     } else {
-      // EVA2 DCU, Errors, SPEC, UIA, Telemetry, EVA States, PR Telemetry, LIDAR
+      // EVA1 DCU, EVA2 DCU, Errors, SPEC, UIA, Telemetry, EVA States
       const lowFreqCommands: number[] = [];
-      for (let i = 8; i <= 16; i++) lowFreqCommands.push(i); // EVA2 DCU, Errors
-      for (let i = 26; i <= 167; i++) lowFreqCommands.push(i); // SPEC, UIA, TELEM, EVA, PR, LIDAR
+      for (let i = 2; i <= 16; i++) lowFreqCommands.push(i); // EVA1 DCU, EVA2 DCU, Errors
+      for (let i = 26; i <= 118; i++) lowFreqCommands.push(i); // SPEC, UIA, TELEM, EVA
+      // Removed PR Telemetry (119-166) and PR LIDAR (167)
       return lowFreqCommands;
     }
   }
@@ -344,7 +242,7 @@ export class PollingClient {
     buffer.writeUInt32BE(command, 4);
 
     this.socket.send(
-      buffer,
+      new Uint8Array(buffer),
       0,
       buffer.length,
       TSS_CONFIG.PORT,
@@ -391,8 +289,9 @@ export class PollingClient {
         // Float Type Commands
         return msg.readFloatBE(8);
       } else if (command === 26 || command === 37) {
-        // SPEC IDs (Int)
-        return msg.readInt32BE(8);
+        // SPEC IDs (TSS sends as Float like 3.0, needs to be Int for map lookup)
+        const floatVal = msg.readFloatBE(8);
+        return floatVal !== null ? Math.round(floatVal) : null;
       } else {
         // Default or Unknown command - attempt float read
         return msg.readFloatBE(8);
@@ -456,30 +355,166 @@ export class PollingClient {
     this.processQueue();
   }
 
+  private handleHighFrequencyData(data: TelemetryData) {
+    // Process IMU data
+    this.handleImuData(data);
+  }
+
   private handleLowFrequencyData(data: LowFrequencyData) {
-    console.log(
-      "Processing low frequency data:",
-      JSON.stringify(data, null, 2)
+    // console.log(
+    //   "Processing low frequency data:",
+    //   JSON.stringify(data, null, 2)
+    // );
+
+    // Handle different types of data
+    this.handleRockData(data);
+    this.handleDcuData(data);
+    this.handleUiaData(data);
+    this.handleBiometricsData(data);
+  }
+
+  private handleImuData(data: TelemetryData) {
+    // Skip if rate limited
+    if (!shouldPublish("IMU")) return;
+
+    // Check if it's time to publish IMU data (once per second)
+    const currentTime = Date.now();
+    if (currentTime - lastImuPublishTime < IMU_PUBLISH_INTERVAL) {
+      return; // Skip if we haven't reached the publish interval
+    }
+
+    // Update last publish time
+    lastImuPublishTime = currentTime;
+
+    // Create EVA1 IMU data object
+    const eva1ImuData = {
+      evaId: 1,
+      position: {
+        x: data.eva1_imu_posx || 0,
+        y: data.eva1_imu_posy || 0,
+      },
+      heading: data.eva1_imu_heading || 0,
+    };
+
+    // Create EVA2 IMU data object
+    const eva2ImuData = {
+      evaId: 2,
+      position: {
+        x: data.eva2_imu_posx || 0,
+        y: data.eva2_imu_posy || 0,
+      },
+      heading: data.eva2_imu_heading || 0,
+    };
+
+    // Send combined IMU data
+    const imuData = {
+      eva1: eva1ImuData,
+      eva2: eva2ImuData,
+      timestamp: currentTime,
+    };
+
+    // console.log(
+    //   "Sending IMU data (rate limited):",
+    //   JSON.stringify(imuData, null, 2)
+    // );
+    wsManager.publish_all(
+      { type: "imu_data", data: imuData, success: true },
+      imuData
     );
+  }
+
+  private handleBiometricsData(data: LowFrequencyData) {
+    // Skip if rate limited
+    if (!shouldPublish("BIOMETRICS")) return;
+
+    // Create EVA1 biometrics data
+    const eva1BiometricsData = {
+      evaId: 1,
+      heartRate: data.eva1_heart_rate || 0,
+      temperature: data.eva1_temperature || 0,
+      o2Consumption: data.eva1_oxy_consumption || 0,
+      co2Production: data.eva1_co2_production || 0,
+      suitPressureTotal: data.eva1_suit_pressure_total || 0,
+      helmetCo2: data.eva1_helmet_pressure_co2 || 0,
+    };
+
+    // Create EVA2 biometrics data
+    const eva2BiometricsData = {
+      evaId: 2,
+      heartRate: data.eva2_heart_rate || 0,
+      temperature: data.eva2_temperature || 0,
+      o2Consumption: data.eva2_oxy_consumption || 0,
+      co2Production: data.eva2_co2_production || 0,
+      suitPressureTotal: data.eva2_suit_pressure_total || 0,
+      helmetCo2: data.eva2_helmet_pressure_co2 || 0,
+    };
+
+    // Send biometrics data for EVA1 if available
+    if (
+      data.eva1_heart_rate !== undefined ||
+      data.eva1_temperature !== undefined
+    ) {
+      // console.log(
+      //   "Sending EVA1 biometrics data (rate limited):",
+      //   JSON.stringify(eva1BiometricsData, null, 2)
+      // );
+      wsManager.publish_all(
+        { type: "biometrics_data", data: eva1BiometricsData, success: true },
+        eva1BiometricsData
+      );
+    }
+
+    // Send biometrics data for EVA2 if available
+    if (
+      data.eva2_heart_rate !== undefined ||
+      data.eva2_temperature !== undefined
+    ) {
+      // console.log(
+      //   "Sending EVA2 biometrics data (rate limited):",
+      //   JSON.stringify(eva2BiometricsData, null, 2)
+      // );
+      wsManager.publish_all(
+        { type: "biometrics_data", data: eva2BiometricsData, success: true },
+        eva2BiometricsData
+      );
+    }
+  }
+
+  private handleRockData(data: LowFrequencyData) {
+    // Skip if rate limited
+    if (!shouldPublish("ROCK")) return;
 
     // Handle rock data for EVA 1
     if (data.eva1_spec_id !== undefined) {
+      const specId = data.eva1_spec_id; // Correctly parsed and rounded ID
+      const rockName = DEFAULT_ROCK_NAMES[specId] || `unknown_rock_${specId}`;
+
+      // Build composition directly from telemetry data using new field names
+      const eva1Composition: { [key: string]: number } = {};
+      if (data.eva1_sio2 !== undefined)
+        eva1Composition["SiO2"] = data.eva1_sio2;
+      if (data.eva1_al2o3 !== undefined)
+        eva1Composition["Al2O3"] = data.eva1_al2o3;
+      if (data.eva1_mno !== undefined) eva1Composition["MnO"] = data.eva1_mno;
+      if (data.eva1_cao !== undefined) eva1Composition["CaO"] = data.eva1_cao;
+      if (data.eva1_p2o3 !== undefined)
+        eva1Composition["P2O3"] = data.eva1_p2o3;
+      if (data.eva1_tio2 !== undefined)
+        eva1Composition["TiO2"] = data.eva1_tio2;
+      if (data.eva1_feo !== undefined) eva1Composition["FeO"] = data.eva1_feo;
+      if (data.eva1_mgo !== undefined) eva1Composition["MgO"] = data.eva1_mgo;
+      if (data.eva1_k2o !== undefined) eva1Composition["K2O"] = data.eva1_k2o;
+      if (data.eva1_rock_other !== undefined)
+        eva1Composition["Other"] = data.eva1_rock_other;
+
       const eva1RockData: RockData = {
         evaId: 1,
-        specId: data.eva1_spec_id,
-        oxygen: data.eva1_spec_oxy || 0,
-        water: data.eva1_spec_water || 0,
-        co2: data.eva1_spec_co2 || 0,
-        h2: data.eva1_spec_h2 || 0,
-        n2: data.eva1_spec_n2 || 0,
-        other: data.eva1_spec_other || 0,
-        temperature: data.eva1_spec_temp || 0,
-        pressure: data.eva1_spec_pres || 0,
-        humidity: data.eva1_spec_humid || 0,
-        light: data.eva1_spec_light || 0,
+        specId: specId,
+        name: rockName,
+        composition: eva1Composition,
       };
       console.log(
-        "Sending EVA 1 rock data:",
+        "Sending EVA 1 rock data (composition from telemetry):",
         JSON.stringify(eva1RockData, null, 2)
       );
       wsManager.publish_all(
@@ -490,22 +525,35 @@ export class PollingClient {
 
     // Handle rock data for EVA 2
     if (data.eva2_spec_id !== undefined) {
+      const specId = data.eva2_spec_id; // Correctly parsed and rounded ID
+      const rockName = DEFAULT_ROCK_NAMES[specId] || `unknown_rock_${specId}`;
+
+      // Build composition directly from telemetry data using new field names
+      const eva2Composition: { [key: string]: number } = {};
+      if (data.eva2_sio2 !== undefined)
+        eva2Composition["SiO2"] = data.eva2_sio2;
+      if (data.eva2_al2o3 !== undefined)
+        eva2Composition["Al2O3"] = data.eva2_al2o3;
+      if (data.eva2_mno !== undefined) eva2Composition["MnO"] = data.eva2_mno;
+      if (data.eva2_cao !== undefined) eva2Composition["CaO"] = data.eva2_cao;
+      if (data.eva2_p2o3 !== undefined)
+        eva2Composition["P2O3"] = data.eva2_p2o3;
+      if (data.eva2_tio2 !== undefined)
+        eva2Composition["TiO2"] = data.eva2_tio2;
+      if (data.eva2_feo !== undefined) eva2Composition["FeO"] = data.eva2_feo;
+      if (data.eva2_mgo !== undefined) eva2Composition["MgO"] = data.eva2_mgo;
+      if (data.eva2_k2o !== undefined) eva2Composition["K2O"] = data.eva2_k2o;
+      if (data.eva2_rock_other !== undefined)
+        eva2Composition["Other"] = data.eva2_rock_other;
+
       const eva2RockData: RockData = {
         evaId: 2,
-        specId: data.eva2_spec_id,
-        oxygen: data.eva2_spec_oxy || 0,
-        water: data.eva2_spec_water || 0,
-        co2: data.eva2_spec_co2 || 0,
-        h2: data.eva2_spec_h2 || 0,
-        n2: data.eva2_spec_n2 || 0,
-        other: data.eva2_spec_other || 0,
-        temperature: data.eva2_spec_temp || 0,
-        pressure: data.eva2_spec_pres || 0,
-        humidity: data.eva2_spec_humid || 0,
-        light: data.eva2_spec_light || 0,
+        specId: specId,
+        name: rockName,
+        composition: eva2Composition,
       };
       console.log(
-        "Sending EVA 2 rock data:",
+        "Sending EVA 2 rock data (composition from telemetry):",
         JSON.stringify(eva2RockData, null, 2)
       );
       wsManager.publish_all(
@@ -513,5 +561,96 @@ export class PollingClient {
         eva2RockData
       );
     }
+  }
+
+  private handleDcuData(data: TelemetryData) {
+    // Skip if rate limited
+    if (!shouldPublish("DCU")) return;
+
+    // Log raw DCU field values to debug the issue
+    // console.log("Raw DCU data from TSS:", {
+    //   eva1_batt: data.eva1_batt,
+    //   eva1_oxy: data.eva1_oxy,
+    //   eva1_comm: data.eva1_comm,
+    //   eva1_fan: data.eva1_fan,
+    //   eva1_pump: data.eva1_pump,
+    //   eva1_co2: data.eva1_co2,
+    //   eva2_batt: data.eva2_batt,
+    //   eva2_oxy: data.eva2_oxy,
+    //   eva2_comm: data.eva2_comm,
+    //   eva2_fan: data.eva2_fan,
+    //   eva2_pump: data.eva2_pump,
+    //   eva2_co2: data.eva2_co2,
+    // });
+
+    // Extract DCU data for EVA1
+    const eva1DcuData = {
+      evaId: 1,
+      battery: data.eva1_batt || 0,
+      oxygen: data.eva1_oxy || 0,
+      comm: data.eva1_comm || 0,
+      fan: data.eva1_fan || 0,
+      pump: data.eva1_pump || 0,
+      co2: data.eva1_co2 || 0,
+    };
+
+    // Always send DCU data for EVA1
+    // console.log(
+    //   "Sending EVA1 DCU data (rate limited):",
+    //   JSON.stringify(eva1DcuData, null, 2)
+    // );
+    wsManager.publish_all(
+      { type: "dcu_data", data: eva1DcuData, success: true },
+      eva1DcuData
+    );
+
+    // Extract DCU data for EVA2
+    const eva2DcuData = {
+      evaId: 2,
+      battery: data.eva2_batt || 0,
+      oxygen: data.eva2_oxy || 0,
+      comm: data.eva2_comm || 0,
+      fan: data.eva2_fan || 0,
+      pump: data.eva2_pump || 0,
+      co2: data.eva2_co2 || 0,
+    };
+
+    // Always send DCU data for EVA2
+    // console.log(
+    //   "Sending EVA2 DCU data (rate limited):",
+    //   JSON.stringify(eva2DcuData, null, 2)
+    // );
+    wsManager.publish_all(
+      { type: "dcu_data", data: eva2DcuData, success: true },
+      eva2DcuData
+    );
+  }
+
+  private handleUiaData(data: LowFrequencyData) {
+    // Skip if rate limited
+    if (!shouldPublish("UIA")) return;
+
+    // Extract UIA data
+    const uiaData = {
+      emu1_power: data.uia_emu1_power || 0,
+      ev1_supply: data.uia_ev1_supply || 0,
+      ev1_waste: data.uia_ev1_waste || 0,
+      ev1_oxygen: data.uia_ev1_oxygen || 0,
+      emu2_power: data.uia_emu2_power || 0,
+      ev2_supply: data.uia_ev2_supply || 0,
+      ev2_waste: data.uia_ev2_waste || 0,
+      ev2_oxygen: data.uia_ev2_oxygen || 0,
+      o2_vent: data.uia_o2_vent || 0,
+      depress_pump: data.uia_depress_pump || 0,
+    };
+
+    // console.log(
+    //   "Sending UIA data (rate limited):",
+    //   JSON.stringify(uiaData, null, 2)
+    // );
+    wsManager.publish_all(
+      { type: "uia_data", data: uiaData, success: true },
+      uiaData
+    );
   }
 }
