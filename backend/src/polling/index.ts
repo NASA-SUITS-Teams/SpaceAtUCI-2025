@@ -7,14 +7,15 @@ let lowFrequency: PollingClient | {} = {}; // Declare outside
 
 try {
   console.log("Attempting to create PollingClient instances...");
-  highFrequency = new PollingClient("high-frequency");
-  lowFrequency = new PollingClient("low-frequency");
+  // highFrequency = new PollingClient("high-frequency");
+  // lowFrequency = new PollingClient("low-frequency");
+  highFrequency = new PollingClient();
   console.log("PollingClient instances created.");
 
   console.log("Attempting to start polling...");
   // Type assertion needed because TS doesn't know they are initialized inside try
   (highFrequency as PollingClient).start();
-  (lowFrequency as PollingClient).start();
+  // (lowFrequency as PollingClient).start();
   console.log("Polling started.");
 } catch (error) {
   console.error(

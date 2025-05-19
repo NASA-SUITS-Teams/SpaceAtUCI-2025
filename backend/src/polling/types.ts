@@ -49,6 +49,13 @@ export interface HighFrequencyData extends TelemetryData {
 
 export interface LowFrequencyData extends TelemetryData {
   type: "low-frequency";
+  // EVA1 DCU (Commands 2-7)
+  eva1_batt?: number;
+  eva1_oxy?: number;
+  eva1_comm?: number;
+  eva1_fan?: number;
+  eva1_pump?: number;
+  eva1_co2?: number;
   // EVA2 DCU (Commands 8-13)
   eva2_batt?: number;
   eva2_oxy?: number;
@@ -60,31 +67,35 @@ export interface LowFrequencyData extends TelemetryData {
   o2_error?: number;
   pump_error?: number;
   fan_error?: number;
-  // EVA 1 SPEC (Commands 26-36)
+  // ROVER (Commands 23-25)
+  rover_posx?: number;
+  rover_posy?: number;
+  rover_qr_id?: number; // Deprecated by README but kept for now
+  // EVA 1 SPEC (Commands 31-41)
   eva1_spec_id?: number;
   eva1_sio2?: number;
-  eva1_al2o3?: number;
-  eva1_mno?: number;
-  eva1_cao?: number;
-  eva1_p2o3?: number;
   eva1_tio2?: number;
+  eva1_al2o3?: number;
   eva1_feo?: number;
+  eva1_mno?: number;
   eva1_mgo?: number;
+  eva1_cao?: number;
   eva1_k2o?: number;
+  eva1_p2o3?: number;
   eva1_rock_other?: number;
-  // EVA 2 SPEC (Commands 37-47)
+  // EVA 2 SPEC (Commands 42-52)
   eva2_spec_id?: number;
   eva2_sio2?: number;
-  eva2_al2o3?: number;
-  eva2_mno?: number;
-  eva2_cao?: number;
-  eva2_p2o3?: number;
   eva2_tio2?: number;
+  eva2_al2o3?: number;
   eva2_feo?: number;
+  eva2_mno?: number;
   eva2_mgo?: number;
+  eva2_cao?: number;
   eva2_k2o?: number;
+  eva2_p2o3?: number;
   eva2_rock_other?: number;
-  // UIA (Commands 48-57)
+  // UIA (Commands 53-62)
   uia_emu1_power?: number;
   uia_ev1_supply?: number;
   uia_ev1_waste?: number;
@@ -95,60 +106,58 @@ export interface LowFrequencyData extends TelemetryData {
   uia_ev2_oxygen?: number;
   uia_o2_vent?: number;
   uia_depress_pump?: number;
-  // TELEMETRY / EVA (Commands 58-118)
-  eva_time?: number;
-  // EVA1 Telemetry (Commands 59-80)
-  eva1_batt_time_left?: number;
-  eva1_oxy_pri_storage?: number;
-  eva1_oxy_sec_storage?: number;
-  eva1_oxy_pri_pressure?: number;
-  eva1_oxy_sec_pressure?: number;
-  eva1_suit_pressure_oxy?: number;
-  eva1_suit_pressure_co2?: number;
-  eva1_suit_pressure_other?: number;
-  eva1_suit_pressure_total?: number;
-  eva1_scrubber_a_pressure?: number;
-  eva1_scrubber_b_pressure?: number;
-  eva1_h2o_gas_pressure?: number;
-  eva1_h2o_liquid_pressure?: number;
-  eva1_oxy_consumption?: number;
-  eva1_co2_production?: number;
-  eva1_fan_pri_rpm?: number;
-  eva1_fan_sec_rpm?: number;
-  eva1_helmet_pressure_co2?: number;
-  eva1_heart_rate?: number;
-  eva1_temperature?: number;
-  eva1_coolant_gas_pressure?: number;
-  eva1_coolant_liquid_pressure?: number;
-  // EVA2 Telemetry (Commands 81-102)
+  // TELEMETRY / EVA (Base command 63)
+  eva_time?: number; // UI: EVA Time
+
+  // EVA1 Telemetry (Commands 64-85) - Mapped to UI field names based on observed values
+  eva1_batt_time_left?: number; // Placeholder from server_data.c, cmd 64
+  eva1_ui_heart_rate?: number; // UI: Heart Rate (bpm)
+  eva1_placeholder_cmd66?: number; // Placeholder for cmd 66
+  eva1_ui_pri_o2_pressure?: number; // UI: Primary O2 Pressure (psi)
+  eva1_ui_suit_o2_pressure?: number; // UI: Suit O2 Pressure (psi)
+  eva1_ui_suit_co2_pressure?: number; // UI: Suit CO2 Pressure (psi)
+  eva1_ui_suit_other_pressure?: number; // UI: Suit Other Pressure (psi)
+  eva1_ui_suit_total_pressure?: number; // UI: Suit Total Pressure (psi)
+  eva1_ui_helmet_co2_pressure?: number; // UI: Helmet CO2 Pressure (psi)
+  eva1_ui_o2_consumption?: number; // UI: O2 Consumption (psi/min)
+  eva1_ui_co2_production?: number; // UI: CO2 Production (psi/min)
+  eva1_ui_fan_pri_rpm?: number; // UI: Primary Fan (rpm)
+  eva1_ui_fan_sec_rpm?: number; // UI: Secondary Fan (rpm)
+  eva1_ui_temperature?: number; // UI: Temperature (deg F)
+  eva1_ui_coolant_ml?: number; // UI: Coolant (ml)
+  eva1_placeholder_cmd79?: number; // Placeholder for cmd 79
+  eva1_ui_scrubber_a_pressure?: number; // UI: Scrubber A Pressure (psi)
+  eva1_ui_scrubber_b_pressure?: number; // UI: Scrubber B Pressure (psi)
+  eva1_placeholder_cmd82?: number; // Placeholder for cmd 82
+  eva1_ui_o2_time_left?: number; // UI: O2 Time Left (seconds total)
+  eva1_ui_h2o_gas_pressure?: number; // UI: H2O Gas Pressure (psi)
+  eva1_ui_h2o_liquid_pressure?: number; // UI: H2O Liquid Pressure (psi)
+
+  // EVA2 Telemetry (Commands 86-107) - Mirrored UI-centric names
   eva2_batt_time_left?: number;
-  eva2_oxy_pri_storage?: number;
-  eva2_oxy_sec_storage?: number;
-  eva2_oxy_pri_pressure?: number;
-  eva2_oxy_sec_pressure?: number;
-  eva2_suit_pressure_oxy?: number;
-  eva2_suit_pressure_co2?: number;
-  eva2_suit_pressure_other?: number;
-  eva2_suit_pressure_total?: number;
-  eva2_scrubber_a_pressure?: number;
-  eva2_scrubber_b_pressure?: number;
-  eva2_h2o_gas_pressure?: number;
-  eva2_h2o_liquid_pressure?: number;
-  eva2_oxy_consumption?: number;
-  eva2_co2_production?: number;
-  eva2_fan_pri_rpm?: number;
-  eva2_fan_sec_rpm?: number;
-  eva2_helmet_pressure_co2?: number;
-  eva2_heart_rate?: number;
-  eva2_temperature?: number;
-  eva2_coolant_gas_pressure?: number;
-  eva2_coolant_liquid_pressure?: number;
-  // Generic EVA States (Commands 103-118)
-  eva_state_103?: number;
-  eva_state_104?: number;
-  eva_state_105?: number;
-  eva_state_106?: number;
-  eva_state_107?: number;
+  eva2_ui_heart_rate?: number;
+  eva2_placeholder_cmd88?: number;
+  eva2_ui_pri_o2_pressure?: number;
+  eva2_ui_suit_o2_pressure?: number;
+  eva2_ui_suit_co2_pressure?: number;
+  eva2_ui_suit_other_pressure?: number;
+  eva2_ui_suit_total_pressure?: number;
+  eva2_ui_helmet_co2_pressure?: number;
+  eva2_ui_o2_consumption?: number;
+  eva2_ui_co2_production?: number;
+  eva2_ui_fan_pri_rpm?: number;
+  eva2_ui_fan_sec_rpm?: number;
+  eva2_ui_temperature?: number;
+  eva2_ui_coolant_ml?: number;
+  eva2_placeholder_cmd101?: number;
+  eva2_ui_scrubber_a_pressure?: number;
+  eva2_ui_scrubber_b_pressure?: number;
+  eva2_placeholder_cmd104?: number;
+  eva2_ui_o2_time_left?: number;
+  eva2_ui_h2o_gas_pressure?: number;
+  eva2_ui_h2o_liquid_pressure?: number;
+
+  // Generic EVA States (Commands 108-123)
   eva_state_108?: number;
   eva_state_109?: number;
   eva_state_110?: number;
